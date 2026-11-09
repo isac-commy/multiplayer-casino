@@ -75,3 +75,25 @@ socket.on('system:message', text => {
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
+
+function renderCards(cards){return (cards||[]).map(c=>c.hidden?'<span class="playing-card back">♠</span>':`<span class="playing-card ${['♥','♦'].includes(c.s)?'red':''}">${escapeHtml(c.r)}${c.s}</span>`).join('');}
+function gameButton(label,action,primary=false){return `<button data-action="${action}" class="${primary?'primary':''}">${label}</button>`;}
+$('startGame').addEventListener('click',()=>{ $('gameError').textContent=''; socket.emit('game:start'); });
+$('gameActions').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const action=b.dataset.action;if(currentGame?.type==='blackjack')socket.emit('blackjack:act',{action});else if(currentGame?.type==='poker')socket.emit('poker:act',{action,amount:currentGame.currentBet+200});});
+let currentGame=null;
+function renderGame(g){currentGame=g;$('gameArea').classList.remove('hidden');$('gameError').textContent='';$('startGame').textContent=g.status==='playing'?'Round in progress':'Start another round';$('startGame').disabled=g.status==='playing';$('gameStatus').textContent=g.type==='poker'?`TEXAS HOLD’EM · ${g.stage.toUpperCase()}`:'BLACKJACK · ARIA THE DEALER';$('gameDetails').textContent=g.type==='poker'?`Pot: ${g.pot} chips · Current bet: ${g.currentBet}`:`${g.status==='playing'?'Dealer is playing':'Round complete'}`;
+ let html='';
+ if(g.type==='poker'){
+  html+=`<div><div class="board-label">Community cards</div><div class="cards-row">${renderCards(g.community)}</div></div>`;
+  for(const [id,p] of Object.entries(g.players)){html+=`<div class="hand-row"><span>${escapeHtml(p.name)}${id===myId?' (you)':''}${p.folded?' · folded':''}${p.result?' · '+escapeHtml(p.result):''}</span><span class="cards-row">${renderCards(p.cards)}</span><strong>${p.bet} bet</strong></div>`;}
+  $('gameActions').innerHTML=g.status==='playing'?gameButton('Fold','fold')+gameButton('Call','call',true)+gameButton('Check','check')+gameButton('Raise +200','raise'):'';
+ }else{
+  html+=`<div><div class="board-label">Aria · Dealer · ${g.dealerTotal} points</div><div class="cards-row">${renderCards(g.dealer)}</div></div>`;
+  const p=g.players[myId];if(p){html+=`<div><div class="board-label">Your hand · ${p.total} points · Bet ${p.bet}</div><div class="cards-row">${renderCards(p.cards)}</div><div class="board-label">${p.result?escapeHtml(p.result):p.done?'Standing':'Your turn'}</div></div>`;}
+  html+=`<div class="hand-row"><span>Other players</span><strong>${Object.entries(g.players).filter(([id])=>id!==myId).map(([,p])=>escapeHtml(p.name)+': '+p.total).join(' · ')||'Just you'}</strong></div>`;
+  $('gameActions').innerHTML=g.status==='playing'&&p&&!p.done?gameButton('Hit','hit',true)+gameButton('Stand','stand'):'';
+ }
+ $('gameBoard').innerHTML=html||'<p class="muted">Waiting for players…</p>';$('gameActions').classList.toggle('hidden',!$('gameActions').innerHTML);
+}
+socket.on('game:state',renderGame);
+socket.on('game:error',message=>{$('gameError').textContent=message;});
