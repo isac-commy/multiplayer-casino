@@ -3,6 +3,7 @@ const http = require('http');
 const express = require('express');
 const { Server } = require('socket.io');
 const { makeRoomCode, createRoom, joinRoom, leaveRoom, getPublicRoom } = require('./rooms');
+const games = require('./games');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,7 +20,14 @@ function cleanName(value) {
 }
 function emitRoom(code) {
   const room = rooms.get(code);
-  if (room) io.to(code).emit('room:update', getPublicRoom(room));
+  if (room) { io.to(code).emit('room:update', getPublicRoom(room)); emitGame(code); }
+}
+function emitGame(code) {
+  const room = rooms.get(code); if (!room?.gameState) return;
+  for (const id of room.players.keys()) {
+    const state = room.gameState.type === 'blackjack' ? games.publicBJ(room.gameState) : games.publicPoker(room.gameState, id);
+    io.to(id).emit('game:state', state);
+  }
 }
 function sendChat(socket, room, scope, message) {
   const text = String(message || '').trim().slice(0, 240);
@@ -69,9 +77,28 @@ io.on('connection', (socket) => {
     const allowed = ['poker', 'blackjack', 'baccarat', 'slots'];
     const room = rooms.get(socket.data.roomCode);
     if (!room || !allowed.includes(game)) return;
-    room.game = game;
+    room.game = game; room.gameState = null;
     emitRoom(room.code);
     io.to(room.code).emit('system:message', `${room.players.get(socket.id)?.name || 'A player'} selected ${game}.`);
+  });
+
+
+  socket.on('game:start', () => {
+    const room = rooms.get(socket.data.roomCode); if (!room) return;
+    if (!['poker','blackjack'].includes(room.game)) return socket.emit('game:error','Choose Poker or Blackjack first.');
+    const result = room.game === 'blackjack' ? games.startBlackjack(room) : games.startPoker(room);
+    if (!result.ok) return socket.emit('game:error', result.error);
+    emitRoom(room.code);
+  });
+  socket.on('blackjack:act', ({ action } = {}) => {
+    const room = rooms.get(socket.data.roomCode); if (!room) return;
+    const result = games.actBlackjack(room, socket.id, action);
+    if (!result.ok) socket.emit('game:error', result.error); else emitRoom(room.code);
+  });
+  socket.on('poker:act', ({ action, amount } = {}) => {
+    const room = rooms.get(socket.data.roomCode); if (!room) return;
+    const result = games.pokerAct(room, socket.id, action, amount);
+    if (!result.ok) socket.emit('game:error', result.error); else emitRoom(room.code);
   });
 
   socket.on('disconnect', () => leaveCurrent(socket));
