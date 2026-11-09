@@ -1,0 +1,15 @@
+{
+  "name": "multiplayer-casino",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multiplayer social casino starter with virtual chips and live chat",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
