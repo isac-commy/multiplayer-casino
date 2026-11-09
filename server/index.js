@@ -25,7 +25,7 @@ function emitRoom(code) {
 function emitGame(code) {
   const room = rooms.get(code); if (!room?.gameState) return;
   for (const id of room.players.keys()) {
-    const state = room.gameState.type === 'blackjack' ? games.publicBJ(room.gameState) : games.publicPoker(room.gameState, id);
+    const state = room.gameState.type === 'blackjack' ? games.publicBJ(room.gameState) : room.gameState.type === 'poker' ? games.publicPoker(room.gameState, id) : games.publicExtra(room.gameState, id);
     io.to(id).emit('game:state', state);
   }
 }
@@ -85,11 +85,18 @@ io.on('connection', (socket) => {
 
   socket.on('game:start', () => {
     const room = rooms.get(socket.data.roomCode); if (!room) return;
-    if (!['poker','blackjack'].includes(room.game)) return socket.emit('game:error','Choose Poker or Blackjack first.');
-    const result = room.game === 'blackjack' ? games.startBlackjack(room) : games.startPoker(room);
+    const starters = { poker: games.startPoker, blackjack: games.startBlackjack, baccarat: games.startBaccarat, roulette: games.startRoulette, slots: games.startSlots };
+    const start = starters[room.game]; if (!start) return socket.emit('game:error','Choose a game first.');
+    const result = start(room);
     if (!result.ok) return socket.emit('game:error', result.error);
     emitRoom(room.code);
   });
+  socket.on('baccarat:bet', ({side,amount}={}) => { const room=rooms.get(socket.data.roomCode); if(!room)return; const r=games.baccaratBet(room,socket.id,side,amount); if(!r.ok)socket.emit('game:error',r.error); else emitRoom(room.code); });
+  socket.on('baccarat:deal', () => { const room=rooms.get(socket.data.roomCode); if(!room)return; const r=games.baccaratDeal(room); if(!r.ok)socket.emit('game:error',r.error); else emitRoom(room.code); });
+  socket.on('roulette:bet', ({spot,amount}={}) => { const room=rooms.get(socket.data.roomCode); if(!room)return; const r=games.rouletteBet(room,socket.id,spot,amount); if(!r.ok)socket.emit('game:error',r.error); else emitRoom(room.code); });
+  socket.on('roulette:spin', () => { const room=rooms.get(socket.data.roomCode); if(!room)return; const r=games.rouletteSpin(room); if(!r.ok)socket.emit('game:error',r.error); else emitRoom(room.code); });
+  socket.on('slots:spin', ({amount}={}) => { const room=rooms.get(socket.data.roomCode); if(!room)return; const r=games.spinSlots(room,socket.id,amount); if(!r.ok)socket.emit('game:error',r.error); else emitRoom(room.code); });
+
   socket.on('blackjack:act', ({ action } = {}) => {
     const room = rooms.get(socket.data.roomCode); if (!room) return;
     const result = games.actBlackjack(room, socket.id, action);
