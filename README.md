@@ -30,3 +30,7 @@ This is a starter, not a finished casino. Add proper accounts/authentication, pe
 PostgreSQL storage, moderation/rate limits, and fully implemented server-authoritative game
 rules before public release. The current demo stores rooms and balances in memory, so they
 reset when the server restarts. Never trust chip amounts or game outcomes sent by the browser.
+
+## Playable games (first release)
+
+The room now includes server-managed **Texas Hold'em** and **Blackjack** rounds. Select Poker or Blackjack in the room, then press **Start game**. Poker supports 2–8 players, private hole cards, community cards, fold/call/check/raise actions and a simple showdown hand evaluator. Blackjack deals each room player a hand against the shared AI dealer; hit and stand are supported. Each round uses virtual chips only (100-chip starting bet). Game state is held in memory and resets if the server restarts. This is an early playable implementation: it does not yet include full casino turn timers, side pots, blind rotation, split/double-down, or persistent accounts.
