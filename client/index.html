@@ -46,7 +46,12 @@
             <div class="felt-table"><div class="table-logo">NEON ROYALE<small id="tableGameName">POKER TABLE</small></div><div class="demo-cards"><span> A♠ </span><span> K♥ </span><span> 10♦ </span></div><p id="tableHint">Choose a game to get the table ready.</p></div>
             <div class="dealer"><div class="dealer-avatar">♛</div><div><b>ARIA</b><small>AI TABLE HOST</small></div><span class="dealer-status">READY</span></div>
           </div>
-          <div class="notice">Game selection is a lobby preview in this starter. Full server-authoritative game rounds are the next development step.</div>
+          <div id="gameArea" class="game-area">
+            <div class="game-toolbar"><div><b id="gameStatus">Choose Poker or Blackjack</b><small id="gameDetails">Start a round when your friends are ready.</small></div><button id="startGame" class="primary">Start game</button></div>
+            <div id="gameBoard" class="game-board"><p class="muted">Select Texas Hold’em or Blackjack above to play.</p></div>
+            <div id="gameActions" class="game-actions hidden"></div>
+            <p id="gameError" class="game-error"></p>
+          </div>
         </section>
 
         <aside class="side-column">
