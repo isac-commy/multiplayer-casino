@@ -34,3 +34,13 @@ reset when the server restarts. Never trust chip amounts or game outcomes sent b
 ## Playable games (first release)
 
 The room now includes server-managed **Texas Hold'em** and **Blackjack** rounds. Select Poker or Blackjack in the room, then press **Start game**. Poker supports 2–8 players, private hole cards, community cards, fold/call/check/raise actions and a simple showdown hand evaluator. Blackjack deals each room player a hand against the shared AI dealer; hit and stand are supported. Each round uses virtual chips only (100-chip starting bet). Game state is held in memory and resets if the server restarts. This is an early playable implementation: it does not yet include full casino turn timers, side pots, blind rotation, split/double-down, or persistent accounts.
+
+
+## V4 update
+- Added selectable virtual chip denominations: 5, 10, 20, 30, 40, 50 and 100.
+- Added draggable chip placement on each game scene; placed table chips stay visible for the current browser session and can be clicked to remove.
+- Enabled Roulette in the room game selector.
+- Added slot gem charge meter and five free spins when five gem symbols have been collected.
+- Slot wagers and Baccarat/Roulette bets now accept the new chip denominations.
+
+Note: table-position chips are visual table markers; actual Baccarat/Roulette/Slots wagers are separately confirmed by the server. Poker/Blackjack gameplay keeps its existing server-side wager rules.

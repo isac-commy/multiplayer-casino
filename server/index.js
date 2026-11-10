@@ -74,7 +74,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('game:select', ({ game } = {}) => {
-    const allowed = ['poker', 'blackjack', 'baccarat', 'slots'];
+    const allowed = ['poker', 'blackjack', 'baccarat', 'roulette', 'slots'];
     const room = rooms.get(socket.data.roomCode);
     if (!room || !allowed.includes(game)) return;
     room.game = game; room.gameState = null;
